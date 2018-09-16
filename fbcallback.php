@@ -3,10 +3,10 @@
 
 	try {
 		$accessToken = $helper->getAccessToken();
-	} catch (\lib\Facebook\Exceptions\FacebookResponseException $e) {
+	} catch (\Facebook\Exceptions\FacebookResponseException $e) {
 		echo "Response Exception: " . $e->getMessage();
 		exit();
-	} catch (\lib\Facebook\Exceptions\FacebookSDKException $e) {
+	} catch (\Facebook\Exceptions\FacebookSDKException $e) {
 		echo "SDK Exception: " . $e->getMessage();
 		exit();
 	}
@@ -20,7 +20,7 @@
 	if (!$accessToken->isLongLived())
 		$accessToken = $oAuth2Client->getLongLivedAccessToken($accessToken);
 
-	$response = $fb->get("me?fields=name,albums{id,name,picture,count,photos{images}}", $accessToken);
+	$response = $fb->get("me?fields=name,albums{id,name,picture,count}", $accessToken);
 	$userData = $response->getGraphNode()->asArray();
 	 
 	//$jsonData = file_get_contents($userData);
@@ -34,7 +34,7 @@
 	$_SESSION['userData'] = $userData;
 //	echo "<a href='https://rtdownloader.000webhostapp.com/albums.php'>goto albums</a>";
 	//var_dump($userData);
-	//$_SESSION['access_token'] = (string) $accessToken;
+	$_SESSION['access_token'] = (string) $accessToken;
 	header('Location:https://rtdownloader.000webhostapp.com/albums.php');
 	//exit();
 ?>
