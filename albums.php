@@ -52,33 +52,132 @@
 	<div class="col-md-8 text-left"> 
 	  <?php
 			@session_start();
+			$token= $_SESSION['access_token'];
+			$url= "https://graph.facebook.com/v3.1/me?fields=albums%7Bid%2Cname%2Cphotos%7Bimages%7D%7D&access_token=".$token;
 			
-			$tmp = $_SESSION['userData'];
+	
+			
+        	
+function getData($url)
+{
+	//  Initiate curl
+	$ch = curl_init();
+	// Disable SSL verification
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	// Will return the response, if false it print the response
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	// Set the url
+	curl_setopt($ch, CURLOPT_URL,$url);
+	// Execute
+	$result=json_decode(curl_exec($ch),true);
+	// Closing
+	curl_close($ch);      
+	return $result;
+}
+   
+$link=array();	
+$links='';        	
+function getNextParser($url)
+{
+	$innerData = getData($url);
+	foreach($innerData['data'] as $image)
+	     {
+		 $GLOBALS['links'].=$image['images'][0]['source']." ";
+	     }
+	if(isset($innerData['paging']['next'])){
+		getNextParser($innerData['paging']['next']);
+	}
+}
+// Main calling 
+$result = getData($url);     		
+foreach($result['albums']['data'] as $album)
+{
+	$GLOBALS['links'].=$album['name']."||";
+	foreach($album['photos']['data'] as $image)
+	{
+		 $GLOBALS['links'].= ($image['images'][0]['source'])." ";
+	}
+	if(isset($album['photos']['paging']['next']))
+	{
+		getNextParser($album['photos']['paging']['next']);
+	}	
+	$GLOBALS['links'].=" , ";
+}	
+$allAlbums = explode(',', $links);
+array_pop($allAlbums);
+
+
+
+
+       
+		
+			
+				$tmp = $_SESSION['userData'];
 			echo "<h3><u> " . $tmp['name'] ."</u></h3>";
              $total = count( $tmp['albums'] );
 			 ?>
+			 
+			 <?php
+			 
+			   foreach($allAlbums as $ab)
+                {
+                   $NameNLinks = explode('||', $ab);
+                   
+                
+                   	$albumName = $NameNLinks[0];
+			 
+			 ?>
+			 
+			 
+			 <div class="row" id="<?php echo str_replace(" ","_",$albumName); ?>" style="width:1000px;display: none; padding:0px 20px;">
+					<?php
+					$urls = explode(' ', $NameNLinks[1]);
+                  
+						   foreach($urls as $url)
+						if(!empty($url))
+						{
+						   ?>
+					<div class="col-md-3 col-sm-3 col-xs-12">
+						<div class="image-box">
+							<a rel="example_group" href="<?php echo $url; ?>"><img src="<?php echo $url; ?>" class="img img-responsive"></a>
+						</div>
+					</div>
+					<?php } ?>
+			   </div>
+			  <?php  }   ?>
+			 
+			 
+			 
 			 <form action=# method="post">
 			 
 			 
 			 <?php
-			 for($i=0;$i<$total;$i++)
-			 { 
-		          
-		           $aid=$tmp['albums'][$i]['id'];
+			 $i=0;
+			   foreach($allAlbums as $ab)
+                {
+                   $NameNLinks = explode('||', $ab);
+                   
+                   
+                
+                   	$albumName = $NameNLinks[0];
+                   	
+                   	$id = $albumName;
+					
 				?>
 				  <div class="col-md-4 col-sm-4 col-xs-12">
 						<div class="img1">
-				       <?php   echo "<b>" . $tmp['albums'][$i]['name']. "</b>";?>     <?php //getting name of albums?>
-				    <input type="checkbox" name="images[]" value="<?php echo $aid;?>">    
+				       <?php   echo "<b>" . $NameNLinks[0]."</b>";?>
+				    <input type="checkbox" name="images[]" value="<?php echo $id;?>">    
 				
-				<a href="show.php?aid=<?php echo $aid; ?>">
+				<a href="#<?php echo str_replace(" ","_",$albumName); ?>" class="fancybox">
 				 <img src="<?php echo $tmp['albums'][$i]['picture']['url']; ?>" class="img img-responsive">
 				</a>
 				
 				<?php
 			
-				 echo "Total Photos:".$tmp['albums'][$i]['count'];    // showing photos of albums
+				 echo "Total Photos:".$tmp['albums'][$i]['count'];
 				 echo "</div></div>";
+				 $i++;
  
 			 }
 			 ?>
@@ -95,7 +194,9 @@
 			 </div>	 
 			 
 	 
-			 			 	 </div>	 
+			 			 	 </div>	
+		
+			 			 	
      <?php            
                $mainDirectory = "facebook_".$tmp['name']."_albums";
 		$mainDirectory = str_replace(' ','',$mainDirectory);
@@ -111,15 +212,22 @@
 			//for individual selected albums
 			foreach($_POST['images'] as $sel)
 			{
-				$counter=0;
+			//	$counter=0;
 				
-				foreach($tmp['albums'] as $album)
-				{
-					$id = $tmp['albums'][$counter]['id'];
-					$albumName = $tmp['albums'][$counter]['name'];
+					  foreach($allAlbums as $ab)
+                {
+                   $NameNLinks = explode('||', $ab);
+                   
+                
+                   	$albumName = $NameNLinks[0];
+					$id =  $NameNLinks[0];
+					$albumName = $id;
+				
+				
 					$mainpath = $path;
-					if($id == $sel)
+						if($id == $sel)
 					{
+					
 						$albumName = str_replace(' ','',$albumName);
 						$albumPath = $mainpath."/".$albumName;
 						// checks the directory is available or not if not the create 
@@ -128,15 +236,25 @@
 						}	
 						// image download
 						$imagePath = $albumPath."/";
-						foreach($album['photos'] as $item)
+                   
+                   $urls = explode(' ', $NameNLinks[1]);
+                  
+                   	$count=1;
+						   foreach($urls as $url)
+						if(!empty($url))
 						{
-							file_put_contents($imagePath.$item['id'].'.jpg', file_get_contents($item['images'][0]['source']));
+						    
 						
+					
+						//    echo "".$url;
+						    
+						file_put_contents($imagePath.$count.'.jpg', file_get_contents($url));
+						
+						$count++;
 						}
-				
 					}
-					$counter++;
-				}
+                	
+                }
 			}
           
           			
@@ -180,9 +298,8 @@
 		//return $zipfilename;
 		
 	}
-	  
-	//  for deleting created directory
-	 
+	
+	
 	function deleteDir($dirPath) {
         if (! is_dir($dirPath)) {
             throw new InvalidArgumentException("$dirPath must be a directory");
@@ -256,7 +373,12 @@
 		<script type="text/javascript" src="source/jquery.fancybox.pack.js"></script>
 		<script type="text/javascript" src="source/jquery.mousewheel.pack.js"></script>
 		<!-- Custom Script -->
-		<script type="text/javascript" src="js/scripts.js"></script>
+			<script type="text/javascript" src="js/scripts.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function() {			
+				$('.fancybox').fancybox();
+			});
+		</script>	
 		
 	</body>
 </html>
