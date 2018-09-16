@@ -1,9 +1,63 @@
 <?php
-	@session_start();
+	session_start();
+		$token= $_SESSION['access_token'];
+			$url= "https://graph.facebook.com/v3.1/me?fields=albums%7Bid%2Cname%2Cphotos%7Bimages%7D%7D&access_token=".$token;
 			
-			$tmp = $_SESSION['userData'];
+        	
+function getData($url)
+{
+	//  Initiate curl
+	$ch = curl_init();
+	// Disable SSL verification
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	// Will return the response, if false it print the response
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	// Set the url
+	curl_setopt($ch, CURLOPT_URL,$url);
+	// Execute
+	$result=json_decode(curl_exec($ch),true);
+	// Closing
+	curl_close($ch);      
+	return $result;
+}
+   
+$link=array();	
+$links='';        	
+function getNextParser($url)
+{
+	$innerData = getData($url);
+	foreach($innerData['data'] as $image)
+	     {
+		 $GLOBALS['links'].=$image['images'][0]['source']." ";
+	     }
+	if(isset($innerData['paging']['next'])){
+		getNextParser($innerData['paging']['next']);
+	}
+}
+// Main calling 
+$result = getData($url);     		
+foreach($result['albums']['data'] as $album)
+{
+	$GLOBALS['links'].=$album['name']."||";
+	foreach($album['photos']['data'] as $image)
+	{
+		 $GLOBALS['links'].= ($image['images'][0]['source'])." ";
+	}
+	if(isset($album['photos']['paging']['next']))
+	{
+		getNextParser($album['photos']['paging']['next']);
+	}	
+	$GLOBALS['links'].=" , ";
+}	
+$allAlbums = explode(',', $links);
+array_pop($allAlbums);
 
 
+
+
+         $tmp =$_SESSION['userData'];
+        
+ 
 $mainDirectory = "facebook_".$tmp['name']."_albums";
 		$mainDirectory = str_replace(' ','',$mainDirectory);
 		$path = $mainDirectory;
@@ -14,18 +68,16 @@ $mainDirectory = "facebook_".$tmp['name']."_albums";
 			mkdir($mainDirectory,0777,true);
 		}
 	
-			//for all albums
-		
-	     
-			
-				$counter=0;
-				foreach($tmp['albums'] as $album)
-				{
-				    
-					//$id = $tmp['albums'][$counter]['id'];
-					$albumName = $tmp['albums'][$counter]['name'];
+                			//for all albums
+                		  foreach($allAlbums as $ab)
+                {
+                   $NameNLinks = explode('||', $ab);
+                   
+                
+                   	$albumName = $NameNLinks[0];
+				
 					$mainpath = $path;
-
+					
 						$albumName = str_replace(' ','',$albumName);
 						$albumPath = $mainpath."/".$albumName;
 						// checks the directory is available or not if not the create 
@@ -34,16 +86,28 @@ $mainDirectory = "facebook_".$tmp['name']."_albums";
 						}	
 						// image download
 						$imagePath = $albumPath."/";
-						foreach($album['photos'] as $item)
+                   
+                   $urls = explode(' ', $NameNLinks[1]);
+                  
+                   	$count=1;
+						   foreach($urls as $url)
+						if(!empty($url))
 						{
-							file_put_contents($imagePath.$item['id'].'.jpg', file_get_contents($item['images'][0]['source']));
+						    
 						
+					
+						//    echo "".$url;
+						    
+						file_put_contents($imagePath.$count.'.jpg', file_get_contents($url));
+						
+						$count++;
 						}
-				        $counter++;
-					}
-				
-				
-       //$folderName = $path;
+                	
+                }
+	     
+		
+			
+		
 	   
 	//for creating and downloading zip file
 	function createZipFile($folderName)
