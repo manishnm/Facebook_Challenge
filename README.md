@@ -13,6 +13,7 @@ rtdownloader is web application which lets you download facebook albums instantl
 
   - fancy box for photos of albums
   - download albums in zip formats
+  -direct view added on Albums
 
 
 You can also:
