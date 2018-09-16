@@ -1,11 +1,12 @@
-
-
-<!DOCTYPE html>
-<html lang="en">
     <?php
-     ob_start();
+       
 			@session_start();
+			
+		
+			
     ?>
+    <!DOCTYPE html>
+    <html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -56,7 +57,7 @@
 	<div class="col-md-8 text-left"> 
 	  <?php
 	     
-			
+		
 			$tmp = $_SESSION['userData'];
 			echo "<h3><u> " . $tmp['name'] ."</u></h3>";
              $total = count( $tmp['albums'] );
@@ -70,14 +71,14 @@
 			 for($i=0;$i<$total;$i++)
 			 { 
 		          
-		           $aid=$tmp['albums'][$i]['id'];
+		          $aid=$tmp['albums'][$i]['name'];
 				?>
 				  <div class="col-md-4 col-sm-4 col-xs-12">
 						<div class="img1">
 				       <?php   echo "<b>" . $tmp['albums'][$i]['name']. "</b>";?>
 				    <input type="checkbox" name="images[]" value="<?php echo $aid;?>">    
 				
-				<a href="show.php?aid=<?php echo $aid; ?>">
+				<a href="#">
 				 <img src="<?php echo $tmp['albums'][$i]['picture']['url']; ?>" class="img img-responsive">
 				</a>
 				
@@ -96,6 +97,61 @@
 			 </div>	 
 			 			 	 </div>	 
      <?php            
+     
+     $token= $_SESSION['access_token'];
+			$url= "https://graph.facebook.com/v3.1/me?fields=albums%7Bid%2Cname%2Cphotos%7Bimages%7D%7D&access_token=".$token;
+			
+	
+			
+        	
+function getData($url)
+{
+	//  Initiate curl
+	$ch = curl_init();
+	// Disable SSL verification
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	// Will return the response, if false it print the response
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	// Set the url
+	curl_setopt($ch, CURLOPT_URL,$url);
+	// Execute
+	$result=json_decode(curl_exec($ch),true);
+	// Closing
+	curl_close($ch);      
+	return $result;
+}
+   
+$link=array();	
+$links='';        	
+function getNextParser($url)
+{
+	$innerData = getData($url);
+	foreach($innerData['data'] as $image)
+	     {
+		 $GLOBALS['links'].=$image['images'][0]['source']." ";
+	     }
+	if(isset($innerData['paging']['next'])){
+		getNextParser($innerData['paging']['next']);
+	}
+}
+// Main calling 
+$result = getData($url);     		
+foreach($result['albums']['data'] as $album)
+{
+	$GLOBALS['links'].=$album['name']."||";
+	foreach($album['photos']['data'] as $image)
+	{
+		 $GLOBALS['links'].= ($image['images'][0]['source'])." ";
+	}
+	if(isset($album['photos']['paging']['next']))
+	{
+		getNextParser($album['photos']['paging']['next']);
+	}	
+	$GLOBALS['links'].=" , ";
+}	
+$allAlbums = explode(',', $links);
+array_pop($allAlbums);
+                       
                $mainDirectory = "facebook_".$tmp['name']."_albums";
 		$mainDirectory = str_replace(' ','',$mainDirectory);
 		$path = $mainDirectory;
@@ -110,15 +166,22 @@
 			//for individual selected albums
 			foreach($_POST['images'] as $sel)
 			{
-				$counter=0;
+		
 				
-				foreach($tmp['albums'] as $album)
-				{
-					$id = $tmp['albums'][$counter]['id'];
-					$albumName = $tmp['albums'][$counter]['name'];
+					  foreach($allAlbums as $ab)
+                {
+                   $NameNLinks = explode('||', $ab);
+                   
+                
+                   	$albumName = $NameNLinks[0];
+					$id =  $NameNLinks[0];
+					$albumName = $id;
+				
+				
 					$mainpath = $path;
-					if($id == $sel)
+						if($id == $sel)
 					{
+					
 						$albumName = str_replace(' ','',$albumName);
 						$albumPath = $mainpath."/".$albumName;
 						// checks the directory is available or not if not the create 
@@ -127,19 +190,30 @@
 						}	
 						// image download
 						$imagePath = $albumPath."/";
-						foreach($album['photos'] as $item)
+                   
+                   $urls = explode(' ', $NameNLinks[1]);
+                  
+                   	$count=1;
+						   foreach($urls as $url)
+						if(!empty($url))
 						{
-							file_put_contents($imagePath.$item['id'].'.jpg', file_get_contents($item['images'][0]['source']));
+						    
 						
+						    
+						file_put_contents($imagePath.$count.'.jpg', file_get_contents($url));
+						
+						$count++;
 						}
-				
 					}
-					$counter++;
-				}
+                	
+                }
 			}
           
           			
-       $folderName = $path;
+      
+          
+          			
+         //$folderName = $path;
 	   
 	//for creating and downloading zip file
 	function createZipFile($folderName)
@@ -151,7 +225,7 @@
 		// Initialize archive object
 		$zip = new ZipArchive();
 		$zipfilename = $folderName.'.zip';
-		$zip->open('files/'.$zipfilename, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+		$zip->open("files/".$zipfilename, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
 		// Create recursive directory iterator
 		/** @var SplFileInfo[] $files */
@@ -202,16 +276,18 @@
 	createZipFile($path);
 	deleteDir($path);
 	$zipname="files/".$path.".zip";
-	  
-	  //backup code starts from here
-	  
-	  
-require_once 'lib/src/Google_Client.php';
-require_once 'lib/src/contrib/Google_DriveService.php';
+	
+	
+	?>
+	
+	<br/>
+	<h5><a href="albums.php"> Go back to your Albums</a></h5>
+	<?php
+	require_once 'src/Google_Client.php';
+require_once 'src/contrib/Google_DriveService.php';
 $client = new Google_Client();
-$client->setClientId(''); 		//client id
-$client->setClientSecret('');   //client secret
-
+$client->setClientId('319634055646-tn6825rj1v8dk8a97ut6bllnnvechu8o.apps.googleusercontent.com');
+$client->setClientSecret('N_gZcVph2JD7iCcyDLKm_L-5');
 $client->setRedirectUri('https://rtdownloader.000webhostapp.com/backup.php');
 $client->setScopes(array('https://www.googleapis.com/auth/drive'));
 if (isset($_GET['code'])) {
@@ -231,7 +307,7 @@ while ($file = $dir->read()) {
     }
 }
 $dir->close();
-if (!empty($_POST)) {
+
     $client->setAccessToken($_SESSION['accessToken1']);
     $service = new Google_DriveService($client);
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -251,24 +327,18 @@ if (!empty($_POST)) {
         );
     }
     finfo_close($finfo);
-	
-	
-	//bacup code end
-	
-    unlink($zipname);   //delete zip file from server
-    header('location:uploadsuccess.php');exit;
+    unlink($zipname);
+    echo "<script>window.location.href='uploadsuccess.php'</script>";
+    
 }
 
 	
 	
-	
+		
 	
 	?>
 
-    <?php	
-		
-			}
-			?>
+    
 			 
 	 
 			 </form>
