@@ -5,7 +5,7 @@
     }
 
  require_once "Facebook/autoload.php";
-  $fb= new \Facebook\Facebook([
+  $fb= new \lib\Facebook\Facebook([
 			 
 			'app_id' => '237783946875812',
 			'app_secret' => '26f9b0ab47ac785a4f9cfa641cca07b8',
