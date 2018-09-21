@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -117,34 +115,12 @@ array_pop($allAlbums);
              $total = count( $tmp['albums'] );
 			 ?>
 			 
-			 <?php
 			 
-			   foreach($allAlbums as $ab)
-                {
-                   $NameNLinks = explode('||', $ab);
-                   
-                
-                   	$albumName = $NameNLinks[0];
+			 <div id="root" class="row" > 
 			 
-			 ?>
-			 
-			 
-			 <div class="row" id="<?php echo str_replace(" ","_",$albumName); ?>" style="width:1000px;display: none; padding:0px 20px;">
-					<?php
-					$urls = explode(' ', $NameNLinks[1]);
-                  
-						   foreach($urls as $url)
-						if(!empty($url))
-						{
-						   ?>
-					<div class="col-md-3 col-sm-3 col-xs-12">
-						<div class="image-box">
-							<a rel="example_group" href="<?php echo $url; ?>"><img src="<?php echo $url; ?>" class="img img-responsive"></a>
-						</div>
-					</div>
-					<?php } ?>
 			   </div>
-			  <?php  }   ?>
+		
+			 
 			 
 			 
 			 
@@ -156,12 +132,13 @@ array_pop($allAlbums);
 			   foreach($allAlbums as $ab)
                 {
                    $NameNLinks = explode('||', $ab);
-                   
-                   
-                
+                  
                    	$albumName = $NameNLinks[0];
-                   	
+                   	$urls = explode(' ', $NameNLinks[1]);
                    	$id = $albumName;
+                   		$am =str_replace(" ","_",$albumName);
+                   		 $str = implode(",", $urls);
+                   		 
 					
 				?>
 				  <div class="col-md-4 col-sm-4 col-xs-12">
@@ -169,7 +146,7 @@ array_pop($allAlbums);
 				       <?php   echo "<b>" . $NameNLinks[0]."</b>";?>
 				    <input type="checkbox" name="images[]" value="<?php echo $id;?>">    
 				
-				<a href="#<?php echo str_replace(" ","_",$albumName); ?>" class="fancybox">
+			<a href="#<?php echo $am; ?>" onclick="show('<?php echo $str; ?>','<?php echo $am; ?>','<?php echo $tmp['albums'][$i]['count']; ?>');" class="fancybox">
 				 <img src="<?php echo $tmp['albums'][$i]['picture']['url']; ?>" class="img img-responsive">
 				</a>
 				
@@ -378,6 +355,63 @@ array_pop($allAlbums);
 			$(document).ready(function() {			
 				$('.fancybox').fancybox();
 			});
+		
+			
+	function show(albumimg,albumname,total){
+		     albumimg = albumimg.split(",");
+		     
+		var totalimg = total;   
+                var a = albumname;
+                
+                
+             var root = document.getElementById('root');
+               
+             if(root.hasChildNodes())
+             {
+              root.removeChild(root.childNodes[0]);
+            
+             }
+              
+    		
+      
+		  var div0 = document.createElement('div');
+                div0.className = 'row'; 
+                div0.setAttribute('id',albumname);
+                div0.setAttribute('style', 'width:1000px;display: none; padding:0px 20px;');
+                root.appendChild(div0);
+		             
+            for(i=0;i<total;i++)
+            {
+            	
+                
+                 var div1 = document.createElement('div');
+                div1.className = 'col-md-3 col-sm-3 col-xs-12'; 
+                
+                div0.appendChild(div1);
+                
+                var div2 = document.createElement('div');
+                div2.className = 'image-box';
+                div1.appendChild(div2);
+                
+                var link = document.createElement('a');
+                link.href=albumimg[i];
+                link.rel='example_group';
+                div2.appendChild(link);
+                
+                var img = document.createElement('img');
+                img.setAttribute('height', '200px');
+                img.setAttribute('width', '200px');
+                img.class ='img img-responsive';
+                img.src = albumimg[i];
+                 
+               
+                link.appendChild(img);
+            
+            }
+		
+			}
+			
+			
 		</script>	
 		
 	</body>
