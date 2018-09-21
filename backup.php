@@ -128,7 +128,7 @@ function getNextParser($url)
 	$innerData = getData($url);
 	foreach($innerData['data'] as $image)
 	     {
-		 $GLOBALS['links'].=$image['images'][0]['source']." ";
+		 $GLOBALS['links'].=$image['images'][1]['source']." ";
 	     }
 	if(isset($innerData['paging']['next'])){
 		getNextParser($innerData['paging']['next']);
@@ -141,7 +141,7 @@ foreach($result['albums']['data'] as $album)
 	$GLOBALS['links'].=$album['name']."||";
 	foreach($album['photos']['data'] as $image)
 	{
-		 $GLOBALS['links'].= ($image['images'][0]['source'])." ";
+		 $GLOBALS['links'].= ($image['images'][1]['source'])." ";
 	}
 	if(isset($album['photos']['paging']['next']))
 	{
