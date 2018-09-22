@@ -1,4 +1,4 @@
-https://scrutinizer-ci.com/g/manishnm/Facebook_Challenge/badges/build.png?b=master
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/manishnm/Facebook_Challenge/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/manishnm/Facebook_Challenge/?branch=master)
 # Facebook_Challenge
 # Rtdownloader
 
