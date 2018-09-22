@@ -1,3 +1,4 @@
+https://scrutinizer-ci.com/g/manishnm/Facebook_Challenge/badges/build.png?b=master
 # Facebook_Challenge
 # Rtdownloader
 
