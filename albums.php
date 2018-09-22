@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+<?php
+@session_start();
+
+if (!isset($_SESSION['access_token']) && !isset($_SESSION['userData']))
+	{
+	header('Location:https://abhishekrt.xyz');
+	} ?>
 <html lang="en">
     <head>
         <meta charset="utf-8">
@@ -49,71 +56,81 @@
 			</div>
 	<div class="col-md-8 text-left"> 
 	  <?php
-			@session_start();
-			$token= $_SESSION['access_token'];
-			$url= "https://graph.facebook.com/v3.1/me?fields=albums%7Bid%2Cname%2Cphotos%7Bimages%7D%7D&access_token=".$token;
-			
-	
-			
-        	
+$token = $_SESSION['access_token'];
+$url = "https://graph.facebook.com/v3.1/me?fields=albums%7Bid%2Cname%2Cphotos%7Bimages%7D%7D&access_token=" . $token;
+
 function getData($url)
-{
+	{
+
 	//  Initiate curl
+
 	$ch = curl_init();
+
 	// Disable SSL verification
+
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
 	// Will return the response, if false it print the response
+
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
 	// Set the url
-	curl_setopt($ch, CURLOPT_URL,$url);
+
+	curl_setopt($ch, CURLOPT_URL, $url);
+
 	// Execute
-	$result=json_decode(curl_exec($ch),true);
+
+	$result = json_decode(curl_exec($ch) , true);
+
 	// Closing
-	curl_close($ch);      
+
+	curl_close($ch);
 	return $result;
-}
-   
-$link=array();	
-$links='';        	
+	}
+
+$link = array();
+$links = '';
+
 function getNextParser($url)
-{
+	{
 	$innerData = getData($url);
 	foreach($innerData['data'] as $image)
-	     {
-		 $GLOBALS['links'].=$image['images'][0]['source']." ";
-	     }
-	if(isset($innerData['paging']['next'])){
+		{
+		$GLOBALS['links'].= $image['images'][0]['source'] . " ";
+		}
+
+	if (isset($innerData['paging']['next']))
+		{
 		getNextParser($innerData['paging']['next']);
+		}
 	}
-}
-// Main calling 
-$result = getData($url);     		
+
+// Main calling
+
+$result = getData($url);
+
 foreach($result['albums']['data'] as $album)
-{
-	$GLOBALS['links'].=$album['name']."||";
+	{
+	$GLOBALS['links'].= $album['name'] . "||";
 	foreach($album['photos']['data'] as $image)
-	{
-		 $GLOBALS['links'].= ($image['images'][0]['source'])." ";
-	}
-	if(isset($album['photos']['paging']['next']))
-	{
+		{
+		$GLOBALS['links'].= ($image['images'][0]['source']) . " ";
+		}
+
+	if (isset($album['photos']['paging']['next']))
+		{
 		getNextParser($album['photos']['paging']['next']);
-	}	
-	$GLOBALS['links'].=" , ";
-}	
+		}
+
+	$GLOBALS['links'].= " , ";
+	}
+
 $allAlbums = explode(',', $links);
 array_pop($allAlbums);
-
-
-
-
-       
-		
-			
-				$tmp = $_SESSION['userData'];
-			echo "<h3><u> " . $tmp['name'] ."</u></h3>";
-             $total = count( $tmp['albums'] );
-			 ?>
+$tmp = $_SESSION['userData'];
+echo "<h3><u> " . $tmp['name'] . "</u></h3>";
+$total = count($tmp['albums']);
+?>
 			 
 			 
 			 <div id="root" class="row" > 
@@ -128,36 +145,40 @@ array_pop($allAlbums);
 			 
 			 
 			 <?php
-			 $i=0;
-			   foreach($allAlbums as $ab)
-                {
-                   $NameNLinks = explode('||', $ab);
-                  
-                   	$albumName = $NameNLinks[0];
-                   	$urls = explode(' ', $NameNLinks[1]);
-                   	$id = $albumName;
-                   		$am =str_replace(" ","_",$albumName);
-                   		 $str = implode(",", $urls);
-                   		 
-					
-				?>
+$i = 0;
+
+foreach($allAlbums as $ab)
+	{
+	$NameNLinks = explode('||', $ab);
+	$albumName = $NameNLinks[0];
+	$urls = explode(' ', $NameNLinks[1]);
+	$id = $albumName;
+	$am = str_replace(" ", "_", $albumName);
+	$str = implode(",", $urls);
+?>
 				  <div class="col-md-4 col-sm-4 col-xs-12">
 						<div class="img1">
-				       <?php   echo "<b>" . $NameNLinks[0]."</b>";?>
-				    <input type="checkbox" name="images[]" value="<?php echo $id;?>">    
+				       <?php
+	echo "<b>" . $NameNLinks[0] . "</b>"; ?>
+				    <input type="checkbox" name="images[]" value="<?php
+	echo $id; ?>">    
 				
-			<a href="#<?php echo $am; ?>" onclick="show('<?php echo $str; ?>','<?php echo $am; ?>','<?php echo $tmp['albums'][$i]['count']; ?>');" class="fancybox">
-				 <img src="<?php echo $tmp['albums'][$i]['picture']['url']; ?>" class="img img-responsive">
+			<a href="#<?php
+	echo $am; ?>" onclick="show('<?php
+	echo $str; ?>','<?php
+	echo $am; ?>','<?php
+	echo $tmp['albums'][$i]['count']; ?>');" class="fancybox">
+				 <img src="<?php
+	echo $tmp['albums'][$i]['picture']['url']; ?>" class="img img-responsive">
 				</a>
 				
 				<?php
-			
-				 echo "Total Photos:".$tmp['albums'][$i]['count'];
-				 echo "</div></div>";
-				 $i++;
- 
-			 }
-			 ?>
+	echo "Total Photos:" . $tmp['albums'][$i]['count'];
+	echo "</div></div>";
+	$i++;
+	}
+
+?>
 			 
 			 <br/>
 			 <br/>
@@ -174,141 +195,153 @@ array_pop($allAlbums);
 			 			 	 </div>	
 		
 			 			 	
-     <?php            
-               $mainDirectory = "facebook_".$tmp['name']."_albums";
-		$mainDirectory = str_replace(' ','',$mainDirectory);
-		$path = $mainDirectory;
+     <?php
+$mainDirectory = "facebook_" . $tmp['name'] . "_albums";
+$mainDirectory = str_replace(' ', '', $mainDirectory);
+$path = $mainDirectory;
 
-	
-	
-		if (!is_dir($mainDirectory)) {
-			mkdir($mainDirectory,0777,true);
-		}
-		if(isset($_REQUEST['images']))
-		{
-			//for individual selected albums
-			foreach($_POST['images'] as $sel)
-			{
-			//	$counter=0;
-				
-					  foreach($allAlbums as $ab)
-                {
-                   $NameNLinks = explode('||', $ab);
-                   
-                
-                   	$albumName = $NameNLinks[0];
-					$id =  $NameNLinks[0];
-					$albumName = $id;
-				
-				
-					$mainpath = $path;
-						if($id == $sel)
-					{
-					
-						$albumName = str_replace(' ','',$albumName);
-						$albumPath = $mainpath."/".$albumName;
-						// checks the directory is available or not if not the create 
-						if (!is_dir($albumPath)) {
-							mkdir($albumPath,0777,true);
-						}	
-						// image download
-						$imagePath = $albumPath."/";
-                   
-                   $urls = explode(' ', $NameNLinks[1]);
-                  
-                   	$count=1;
-						   foreach($urls as $url)
-						if(!empty($url))
-						{
-						    
-						
-					
-						//    echo "".$url;
-						    
-						file_put_contents($imagePath.$count.'.jpg', file_get_contents($url));
-						
-						$count++;
-						}
-					}
-                	
-                }
-			}
-          
-          			
-       $folderName = $path;
-	   
-	//for creating and downloading zip file
-	function createZipFile($folderName)
+if (!is_dir($mainDirectory))
 	{
-		//$folderName= "zipFolderDemo";
-		$filepath =  $_SERVER['DOCUMENT_ROOT']."/".$folderName;
+	mkdir($mainDirectory, 0777, true);
+	}
+
+if (isset($_REQUEST['images']))
+	{
+
+	// for individual selected albums
+
+	foreach($_POST['images'] as $sel)
+		{
+
+		//	$counter=0;
+
+		foreach($allAlbums as $ab)
+			{
+			$NameNLinks = explode('||', $ab);
+			$albumName = $NameNLinks[0];
+			$id = $NameNLinks[0];
+			$albumName = $id;
+			$mainpath = $path;
+			if ($id == $sel)
+				{
+				$albumName = str_replace(' ', '', $albumName);
+				$albumPath = $mainpath . "/" . $albumName;
+
+				// checks the directory is available or not if not the create
+
+				if (!is_dir($albumPath))
+					{
+					mkdir($albumPath, 0777, true);
+					}
+
+				// image download
+
+				$imagePath = $albumPath . "/";
+				$urls = explode(' ', $NameNLinks[1]);
+				$count = 1;
+				foreach($urls as $url)
+				if (!empty($url))
+					{
+
+					//    echo "".$url;
+
+					file_put_contents($imagePath . $count . '.jpg', file_get_contents($url));
+					$count++;
+					}
+				}
+			}
+		}
+
+	$folderName = $path;
+
+	// for creating and downloading zip file
+
+	function createZipFile($folderName)
+		{
+
+		// $folderName= "zipFolderDemo";
+
+		$filepath = $_SERVER['DOCUMENT_ROOT'] . "/" . $folderName;
 		$rootPath = realpath($filepath);
 
 		// Initialize archive object
+
 		$zip = new ZipArchive();
-		$zipfilename = $folderName.'.zip';
-		$zip->open('files/'.$zipfilename, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+		$zipfilename = $folderName . '.zip';
+		$zip->open('files/' . $zipfilename, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
 		// Create recursive directory iterator
+
 		/** @var SplFileInfo[] $files */
-		$files = new RecursiveIteratorIterator(
-			new RecursiveDirectoryIterator($rootPath),
-			RecursiveIteratorIterator::LEAVES_ONLY
-		);
-	
-		foreach ($files as $name => $file)
-		{
-			// Skip directories (they would be added automatically)
-			if (!$file->isDir())
+		$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath) , RecursiveIteratorIterator::LEAVES_ONLY);
+		foreach($files as $name => $file)
 			{
+
+			// Skip directories (they would be added automatically)
+
+			if (!$file->isDir())
+				{
+
 				// Get real and relative path for current file
+
 				$filePath = $file->getRealPath();
 				$relativePath = substr($filePath, strlen($rootPath) + 1);
 
 				// Add current file to archive
+
 				$zip->addFile($filePath, $relativePath);
+				}
 			}
-		}
 
 		// Zip archive will be created only after closing object
+
 		$zip->close();
-		//return $zipfilename;
-		
-	}
-	
-	
-	function deleteDir($dirPath) {
-        if (! is_dir($dirPath)) {
-            throw new InvalidArgumentException("$dirPath must be a directory");
-        }
-        if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') {
-            $dirPath .= '/';
-        }
-        $files = glob($dirPath . '*', GLOB_MARK);
-        foreach ($files as $file) {
-            if (is_dir($file)) {
-                deleteDir($file);
-            } else {
-                unlink($file);
-            }
-        }
-        rmdir($dirPath);
-    }
-	
+
+		// return $zipfilename;
+
+		}
+
+	function deleteDir($dirPath)
+		{
+		if (!is_dir($dirPath))
+			{
+			throw new InvalidArgumentException("$dirPath must be a directory");
+			}
+
+		if (substr($dirPath, strlen($dirPath) - 1, 1) != '/')
+			{
+			$dirPath.= '/';
+			}
+
+		$files = glob($dirPath . '*', GLOB_MARK);
+		foreach($files as $file)
+			{
+			if (is_dir($file))
+				{
+				deleteDir($file);
+				}
+			  else
+				{
+				unlink($file);
+				}
+			}
+
+		rmdir($dirPath);
+		}
+
 	createZipFile($path);
 	deleteDir($path);
+	$zipfilename = $path . '.zip';
+	$filename = "files/" . $zipfilename;
+	if (file_exists($filename))
+		{
+		echo "<script>window.location.href='a.php?filename=$filename'</script>";
+		}
+	}
+
+?>
 	
-	$zipfilename = $path.'.zip';
-	
-	
-	?>
-	<br/>
-	<p> Click <a href="<?php echo "files/".$zipfilename ?>">here </a> to download zip file.</p>
-    <?php	
-		
-			}
-			?>
-			 
+   
 	 
 			 </form>
 			 
